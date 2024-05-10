@@ -9,20 +9,18 @@ import model.Employee;
 import util.DatabaseUtil;
 
 public class EmployeeDAO {
-	
-    private Connection connection;
+	private Connection connection;
 
-    // Constructor que inicializa la conexión
-    public EmployeeDAO() throws SQLException {
-        connection = DatabaseUtil.getConnection();
-    }
-	
+	// Constructor que inicializa la conexión
+	public EmployeeDAO() throws SQLException {
+		connection = DatabaseUtil.getConnection();
+	}
+
 	// Método para agregar un empleado a la base de datos
 	public void addEmployee(Employee employee) throws SQLException {
 		String sql = "INSERT INTO employees (emp_no, birth_date, first_name, last_name, gender, hire_date) "
 				+ "VALUES (?, ?, ?, ?, ?, ?)";
-		try (Connection connection = DatabaseUtil.getConnection();
-				PreparedStatement statement = connection.prepareStatement(sql)) {
+		try (PreparedStatement statement = connection.prepareStatement(sql)) {
 			statement.setInt(1, employee.getEmpNo());
 			statement.setDate(2, java.sql.Date.valueOf(employee.getBirthDate()));
 			statement.setString(3, employee.getFirstName());
@@ -30,14 +28,15 @@ public class EmployeeDAO {
 			statement.setString(5, employee.getGender());
 			statement.setDate(6, java.sql.Date.valueOf(employee.getHireDate()));
 			statement.executeUpdate();
+		} finally {
+			closeConnection();
 		}
 	}
 
 	// Método para obtener un empleado por su número de empleado
 	public Employee getEmployee(int empNo) throws SQLException {
 		String sql = "SELECT * FROM employees WHERE emp_no = ?";
-		try (Connection connection = DatabaseUtil.getConnection();
-				PreparedStatement statement = connection.prepareStatement(sql)) {
+		try (PreparedStatement statement = connection.prepareStatement(sql)) {
 			statement.setInt(1, empNo);
 			ResultSet resultSet = statement.executeQuery();
 			if (resultSet.next()) {
@@ -47,6 +46,8 @@ public class EmployeeDAO {
 			} else {
 				return null;
 			}
+		} finally {
+			closeConnection();
 		}
 	}
 
@@ -54,8 +55,7 @@ public class EmployeeDAO {
 	public void updateEmployee(Employee employee) throws SQLException {
 		String sql = "UPDATE employees SET birth_date = ?, first_name = ?, last_name = ?, gender = ?, hire_date = ? "
 				+ "WHERE emp_no = ?";
-		try (Connection connection = DatabaseUtil.getConnection();
-				PreparedStatement statement = connection.prepareStatement(sql)) {
+		try (PreparedStatement statement = connection.prepareStatement(sql)) {
 			statement.setDate(1, java.sql.Date.valueOf(employee.getBirthDate()));
 			statement.setString(2, employee.getFirstName());
 			statement.setString(3, employee.getLastName());
@@ -63,16 +63,26 @@ public class EmployeeDAO {
 			statement.setDate(5, java.sql.Date.valueOf(employee.getHireDate()));
 			statement.setInt(6, employee.getEmpNo());
 			statement.executeUpdate();
+		} finally {
+			closeConnection();
 		}
 	}
 
 	// Método para eliminar un empleado por su número de empleado
 	public void deleteEmployee(int empNo) throws SQLException {
 		String sql = "DELETE FROM employees WHERE emp_no = ?";
-		try (Connection connection = DatabaseUtil.getConnection();
-				PreparedStatement statement = connection.prepareStatement(sql)) {
+		try (PreparedStatement statement = connection.prepareStatement(sql)) {
 			statement.setInt(1, empNo);
 			statement.executeUpdate();
+		} finally {
+			closeConnection();
+		}
+	}
+
+	// Método para cerrar la conexión de manera explícita
+	private void closeConnection() throws SQLException {
+		if (connection != null) {
+			connection.close();
 		}
 	}
 }
